@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shuffle.png</file>
+        <file>shuffle.ico</file>
+    </qresource>
+</RCC>
