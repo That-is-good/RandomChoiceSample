@@ -129,6 +129,10 @@ void RandomChoice::on_action_5_triggered()
 //生成结果
 void RandomChoice::on_pushButton_released()
 {
+    if (!res->isHidden()){
+        ShowMsgBox("窗口未关闭！");
+        return;
+    }
     std::list<int> weigths;
     int allCounts = PersonListItem->rowCount();
     if (allCounts <= 0){
