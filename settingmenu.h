@@ -21,13 +21,27 @@ public:
     explicit SettingMenu(QWidget *parent = nullptr);
     ~SettingMenu();
 
+private slots:
+    void on_animationTime_valueChanged(int value);
+
+    void on_animationCnt_valueChanged(int value);
+
+    void on_randDevMt_toggled(bool checked);
+
+    void on_MtSeed_toggled(bool checked);
+
+    void on_EnterSeed_valueChanged(int arg1);
+
 private:
     Ui::SettingMenu *ui;
-    QSlider *animationTime;
-    QSlider *animationCnt;
-    QRadioButton *mttAndrand;
-    QRadioButton *mttAndseed;
-    QSpinBox *seedEnter;
+    int animationTime = 64;
+    int animationCnt = 32;
+    int seed = 0;
+    bool mode = true;
+    /*
+     * false    为梅森+随机
+     * true     为梅森+时间
+    */
 };
 
 #endif // SETTINGMENU_H

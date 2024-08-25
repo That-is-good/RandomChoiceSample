@@ -19,26 +19,28 @@ public:
     void setEng(bool);
     void setonceTime(int);
     void setaniTime(int);
-    void setlist(std::list<int> *);
+    void setlist(std::list<unsigned short> *);
     void setItemModel(QStandardItemModel *);
     void setRes(ShowResult*);
     void setAnimation(bool);
     void setRepeated(bool);
-    void setSeed(unsigned long);
+    void setSeed(int);
+    void forcedFN(bool);
 protected:
     void run();
 signals:
 private:
-    unsigned long SUMseed;
-    int maxCnt = 0;
+    bool forcedFinsh = false;
+    unsigned long long SUMseed = 0;
+    int maxCnt = 1;
     int onceTime = 64;
     int aniTime = 32;
     int allCounts = 0;
-    short engset = 0;
+    bool engset = true;
     bool animation = true;
     bool repeated = false;
     bool *chosen;
-    std::list<int>* weights;
+    std::list<unsigned short>* weights;
     QStandardItemModel *PersonListItem;
     ShowResult* res;
 };

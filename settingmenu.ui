@@ -120,16 +120,6 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QRadioButton" name="randDev">
-       <property name="text">
-        <string>随机设备引擎</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QRadioButton" name="randDevMt">
        <property name="text">
         <string>梅森回旋算法+随机设备引擎</string>

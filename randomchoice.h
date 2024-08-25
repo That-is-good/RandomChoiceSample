@@ -15,11 +15,21 @@
 #include <QCheckBox>
 #include <QFile>
 
+#include <list>
+#include <random>
 #include "showsamples.h"
 #include "showresult.h"
 #include "settingmenu.h"
 
-#define StrhelpStr "本程序由NewJay好果汁无限公司制作\n1.动画指抽样时的变化动画，具体请到设置->详细调节。\n2.引擎是指抽样时采用的随机数方法，一般推荐linux系统用randomdevice。\n3.文件中写权重可以通过该格式 \"[权重]+[制表符]+[元素]\"不写默认为1,\n\t制表符一般是按Tab键输入。"
+#define StrhelpStr "本程序由NewJay好果汁无限公司制作\n\
+1.动画指抽样时的变化动画，具体请到设置->详细调节。\n\
+2.引擎是指抽样时采用的随机数方法，一般推荐linux系统用mt+randev。\n\
+3.文件中写权重可以通过该格式 \"[权重]+[制表符]+[元素]\"不写默认为1,\n\
+4.配置文件为“setting.ini”，其中有以下参数\n\
+font_family为字体类型, font_size为字体大小\n\
+anim_cnt为动画次数, anim_time为动画时间\n\
+rand_mode为随机类型\
+"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -32,6 +42,12 @@ class RandomChoice : public QMainWindow
     Q_OBJECT
 
 public:
+    QList<QStandardItem*> AddEle(QString, QString, int);
+    void setWeights(int, int);
+    int checkWeight(QString);
+    void setITR(int);
+    void effFont();
+    void readini();
     RandomChoice(QWidget *parent = nullptr);
     ~RandomChoice();
     void readFiletoTable(QString fn);
@@ -63,15 +79,29 @@ private slots:
 
     void on_action_2_triggered();
 
+    void on_animation_toggled(bool checked);
+
+    void on_spinBox_valueChanged(int arg1);
+
+    void on_repeated_toggled(bool checked);
+
+    void on_personlist_chg(const QModelIndex &);
+
 private:
+    std::list<unsigned short>::iterator itr;
+    std::list<unsigned short> weigths;
+    bool states[2] = {true, false};
+    /*
+     * 0    动画
+     * 1    重复
+    */
+    int cnts = 1;
+    unsigned short rCNT = 0;
     Ui::RandomChoice *ui;
     QFont font;
     QTableView* PersonList;
     QStandardItemModel *PersonListItem = new QStandardItemModel(this);
     QMessageBox msgBox = QMessageBox(this);
-    QSpinBox *Rdcnts;
-    QCheckBox *repeated;
-    QCheckBox *animation;
     ShowResult *res = new ShowResult();
     SettingMenu *setting = new SettingMenu();
     QAction *engset;

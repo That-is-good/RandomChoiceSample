@@ -20,7 +20,7 @@ void ShowSamples::setAllCnt(int allcnt){
 void ShowSamples::setEng(bool eng){
     this->engset = eng;
 }
-void ShowSamples::setlist(std::list<int> * list){
+void ShowSamples::setlist(std::list<unsigned short> * list){
     this->weights = list;
 }
 void ShowSamples::setItemModel(QStandardItemModel *itemModel){
@@ -36,12 +36,12 @@ void ShowSamples::setRepeated(bool rep){
     this->repeated = rep;
 }
 
-void ShowSamples::setSeed(unsigned long seed){
-    if (seed == 0){
-        this->SUMseed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    }else{
-        this->SUMseed = seed;
-    }
+void ShowSamples::setSeed(int seed){
+    this->SUMseed = seed;
+}
+
+void ShowSamples::forcedFN(bool t){
+    this->forcedFinsh = t;
 }
 
 void ShowSamples::run(){
@@ -51,24 +51,36 @@ void ShowSamples::run(){
             chosen[i] = false;
         }
     }
-    std::random_device rd;
-    std::mt19937 gen;
-    if (this->engset == 1){
-        gen = std::mt19937(rd());
-    }else if(this->engset == 2){
-        gen = std::mt19937(this->SUMseed);
+    qDebug() << "==========================";
+    for (auto i = weights->begin(); i != weights->end(); ++i){
+        qDebug() << *i;
     }
+    qDebug() << "==========================";
+    std::mt19937 gen;
+    if (this->engset == false){
+        gen = std::mt19937(std::random_device()());
+        qDebug() << "梅森随机";
+    }else{
+        if (this->SUMseed == 0){
+            this->SUMseed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            gen = std::mt19937(this->SUMseed);
+            qDebug() << "梅森时间种子: " << this->SUMseed;
+            this->SUMseed = 0;
+        }else{
+            gen = std::mt19937(this->SUMseed);
+            qDebug() << "梅森时间种子: " << this->SUMseed;
+        }
+
+    }
+    qDebug() << "动画时间" << onceTime;
+    qDebug() << "动画次数" << aniTime;
     std::discrete_distribution<int> distr(this->weights->begin(), this->weights->end());
     for (int i = 0; i < this->maxCnt; ++i) {
         int haschosen = distr(gen);
         res->addText(PersonListItem->item(haschosen, 1)->text());
         if (animation){
             for (int j = 0; j < aniTime; ++j) {
-                if (this->engset == 0){
-                    haschosen = distr(rd);
-                }else{
-                    haschosen = distr(gen);
-                }
+                haschosen = distr(gen);
                 res->resetText(i, PersonListItem->item(haschosen, 1)->text());
                 QThread::msleep(onceTime);
             }
@@ -79,6 +91,10 @@ void ShowSamples::run(){
             }
             res->resetText(i, PersonListItem->item(haschosen, 1)->text());
             chosen[haschosen] = true;
+        }
+        if (forcedFinsh){
+            forcedFinsh = false;
+            break;
         }
     }
 
