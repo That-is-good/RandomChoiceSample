@@ -9,6 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    bubblewindow.cpp \
     main.cpp \
     randomchoice.cpp \
     settingmenu.cpp \
@@ -16,12 +17,14 @@ SOURCES += \
     showsamples.cpp
 
 HEADERS += \
+    bubblewindow.h \
     randomchoice.h \
     settingmenu.h \
     showresult.h \
     showsamples.h
 
 FORMS += \
+    bubblewindow.ui \
     randomchoice.ui \
     settingmenu.ui \
     showresult.ui

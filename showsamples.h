@@ -30,8 +30,8 @@ protected:
     void run();
 signals:
 private:
+    long long start_T;
     bool forcedFinsh = false;
-    unsigned long long SUMseed = 0;
     int maxCnt = 1;
     int onceTime = 64;
     int aniTime = 32;

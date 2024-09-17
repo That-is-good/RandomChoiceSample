@@ -4,7 +4,6 @@
 #include <QDialog>
 #include <QRadioButton>
 #include <QSlider>
-#include <QSpinBox>
 
 class RandomChoice;
 
@@ -22,21 +21,20 @@ public:
     ~SettingMenu();
 
 private slots:
-    void on_animationTime_valueChanged(int value);
 
-    void on_animationCnt_valueChanged(int value);
+    void on_buttonBox_accepted();
 
-    void on_randDevMt_toggled(bool checked);
-
-    void on_MtSeed_toggled(bool checked);
-
-    void on_EnterSeed_valueChanged(int arg1);
+    void on_buttonBox_rejected();
 
 private:
     Ui::SettingMenu *ui;
+    QSlider* C_animationTime;
+    QSlider* C_animationCnt;
+    QRadioButton* C_mode_randDevMt;
+    QRadioButton* C_mode_MtSeed;
+
     int animationTime = 64;
     int animationCnt = 32;
-    int seed = 0;
     bool mode = true;
     /*
      * false    为梅森+随机

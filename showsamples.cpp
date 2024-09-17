@@ -2,7 +2,7 @@
 
 ShowSamples::ShowSamples(QObject *parent) : QThread(parent)
 {
-
+    start_T = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 }
 
 void ShowSamples::setonceTime(int onceT){
@@ -36,10 +36,6 @@ void ShowSamples::setRepeated(bool rep){
     this->repeated = rep;
 }
 
-void ShowSamples::setSeed(int seed){
-    this->SUMseed = seed;
-}
-
 void ShowSamples::forcedFN(bool t){
     this->forcedFinsh = t;
 }
@@ -51,40 +47,32 @@ void ShowSamples::run(){
             chosen[i] = false;
         }
     }
-    qDebug() << "==========================";
-    for (auto i = weights->begin(); i != weights->end(); ++i){
-        qDebug() << *i;
-    }
-    qDebug() << "==========================";
-    std::mt19937 gen;
+    std::mt19937_64 gen;
     if (this->engset == false){
-        gen = std::mt19937(std::random_device()());
+        gen = std::mt19937_64(std::random_device()());
         qDebug() << "梅森随机";
     }else{
-        if (this->SUMseed == 0){
-            this->SUMseed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-            gen = std::mt19937(this->SUMseed);
-            qDebug() << "梅森时间种子: " << this->SUMseed;
-            this->SUMseed = 0;
-        }else{
-            gen = std::mt19937(this->SUMseed);
-            qDebug() << "梅森时间种子: " << this->SUMseed;
+        long long deltaT = std::chrono::high_resolution_clock::now().time_since_epoch().count() - start_T;
+        gen = std::mt19937_64(deltaT);
+        qDebug() << "梅森时间种子: " << deltaT;
+        if (deltaT > 4294967296){
+            start_T = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         }
-
     }
     qDebug() << "动画时间" << onceTime;
     qDebug() << "动画次数" << aniTime;
     std::discrete_distribution<int> distr(this->weights->begin(), this->weights->end());
+    int haschosen = 0;
     for (int i = 0; i < this->maxCnt; ++i) {
-        int haschosen = distr(gen);
-        res->addText(PersonListItem->item(haschosen, 1)->text());
+        res->addText("");
         if (animation){
-            for (int j = 0; j < aniTime; ++j) {
-                haschosen = distr(gen);
-                res->resetText(i, PersonListItem->item(haschosen, 1)->text());
+            for (int j = 1; j < aniTime; ++j) {
+                res->resetText(i, PersonListItem->item(j%allCounts, 1)->text());
                 QThread::msleep(onceTime);
             }
         }
+        haschosen = distr(gen);
+        res->resetText(i, PersonListItem->item(haschosen, 1)->text());
         if (!repeated){
             while (chosen[haschosen]){
                 haschosen = distr(gen);
@@ -92,6 +80,7 @@ void ShowSamples::run(){
             res->resetText(i, PersonListItem->item(haschosen, 1)->text());
             chosen[haschosen] = true;
         }
+        qDebug() << "索引: " << haschosen;
         if (forcedFinsh){
             forcedFinsh = false;
             break;

@@ -16,7 +16,7 @@
 #include <QFile>
 
 #include <list>
-#include <random>
+#include "bubblewindow.h"
 #include "showsamples.h"
 #include "showresult.h"
 #include "settingmenu.h"
@@ -26,9 +26,10 @@
 2.引擎是指抽样时采用的随机数方法，一般推荐linux系统用mt+randev。\n\
 3.文件中写权重可以通过该格式 \"[权重]+[制表符]+[元素]\"不写默认为1,\n\
 4.配置文件为“setting.ini”，其中有以下参数\n\
-font_family为字体类型, font_size为字体大小\n\
-anim_cnt为动画次数, anim_time为动画时间\n\
-rand_mode为随机类型\
+  width为宽度，hight为高度\n\
+  font_family为字体类型, font_size为字体大小\n\
+  anim_cnt为动画次数, anim_time为动画时间\n\
+  rand_mode为随机类型: 0为梅森+随机, 1为梅森+时间\
 "
 
 QT_BEGIN_NAMESPACE
@@ -52,40 +53,30 @@ public:
     ~RandomChoice();
     void readFiletoTable(QString fn);
     void ShowMsgBox(QString str);
+    void startResultShow_sub();
+    void startResultShow();
 protected:
     virtual void dragEnterEvent(QDragEnterEvent* event) override;
     virtual void dropEvent(QDropEvent *event) override;
 
 private slots:
     void on_pushButton_2_released();
-
     void on_pushButton_3_released();
-
     void on_pushButton_4_released();
-
     void on_pushButton_5_released();
-
     void on_action_triggered();
-
     void on_action_4_triggered();
-
     void on_action_5_triggered();
-
-    void on_pushButton_released();
-
     void on_helpUse_triggered();
-
     void on_pushButton_6_clicked();
-
     void on_action_2_triggered();
-
     void on_animation_toggled(bool checked);
-
     void on_spinBox_valueChanged(int arg1);
-
     void on_repeated_toggled(bool checked);
-
     void on_personlist_chg(const QModelIndex &);
+    void on_startRandC_clicked();
+
+    void on_bubblePop_triggered();
 
 private:
     std::list<unsigned short>::iterator itr;
@@ -103,10 +94,12 @@ private:
     QStandardItemModel *PersonListItem = new QStandardItemModel(this);
     QMessageBox msgBox = QMessageBox(this);
     ShowResult *res = new ShowResult();
-    SettingMenu *setting = new SettingMenu();
+    SettingMenu *setting = new SettingMenu(this);
     QAction *engset;
     const QStringList headLabel = QStringList() << "权重" << "元素";
     ShowSamples* threadSample = new ShowSamples(this);
+    BubbleWindow* floatwindow = new BubbleWindow(this);
+
 };
 
 #endif // RANDOMCHOICE_H

@@ -101,7 +101,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="startRandC">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -206,6 +206,7 @@
     <property name="title">
      <string>设置</string>
     </property>
+    <addaction name="bubblePop"/>
     <addaction name="action_2"/>
     <addaction name="action_5"/>
     <addaction name="separator"/>
@@ -271,6 +272,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="bubblePop">
+   <property name="icon">
+    <iconset theme="call-start"/>
+   </property>
+   <property name="text">
+    <string>悬浮窗</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
  </widget>

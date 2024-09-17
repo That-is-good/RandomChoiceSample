@@ -67,48 +67,70 @@ RandomChoice::RandomChoice(QWidget *parent) : QMainWindow(parent), ui(new Ui::Ra
     QObject::connect(PersonListItem, &QAbstractItemModel::dataChanged, this, &RandomChoice::on_personlist_chg);
     threadSample->setlist(&weigths);
     this->setAcceptDrops(true);
+    connect(this->floatwindow, &BubbleWindow::startChoosing, this, &RandomChoice::startResultShow_sub);
     readini();
 }
 
 RandomChoice::~RandomChoice()
 {
+    delete this->res;
+    delete this->setting;
+    delete this->threadSample;
+    delete this->PersonListItem;
     delete ui;
 }
 
+void RandomChoice::startResultShow_sub(){
+    this->startResultShow();
+}
+
+//读取配置文件
 void RandomChoice::readini(){
     QFile iniReader("setting.ini");
     if (iniReader.open(QIODevice::ReadOnly | QIODevice::Text)){
         while (!iniReader.atEnd()){
             QByteArray l = iniReader.readLine().removeLast();
-            qsizetype seprated = l.indexOf('=');
-            QByteArray left = l.left(seprated);
-            QByteArray right = l.mid(seprated + 1);
-            int math_right = right.toInt();
-            if (left == "font_family"){
-                this->font.setFamily(right.toStdString().c_str());
-            }else if(left == "font_size"){
-                this->font.setPointSize(math_right);
-            }else if(left == "anim_cnt"){
-                if (math_right >= 8 && math_right <= 256){
-                    this->threadSample->setaniTime(math_right);
-                }else{
-                    ShowMsgBox("动画次数只能在8～256.");
+            if (l.length() > 0 && l[0] != '#'){
+                qsizetype seprated = l.indexOf('=');
+                QByteArray left = l.left(seprated);
+                QByteArray right = l.mid(seprated + 1);
+                int math_right = right.toInt();
+                if (left == "font_family"){
+                    this->font.setFamily(right.toStdString().c_str());
+                }else if(left == "font_size"){
+                    this->font.setPointSize(math_right);
+                }else if(left == "anim_cnt"){
+                    if (math_right >= 8 && math_right <= 256){
+                        this->threadSample->setaniTime(math_right);
+                        this->setting->animationCnt = math_right;
+                    }else{
+                        ShowMsgBox("动画次数只能在8～256.");
+                    }
+                }else if(left == "anim_time"){
+                    if (math_right >= 8 && math_right <= 256){
+                        this->threadSample->setonceTime(math_right);
+                        this->setting->animationTime = math_right;
+                    }else{
+                        ShowMsgBox("动画时间只能在8～256.");
+                    }
+                }else if(left == "rand_mode"){
+                    if (math_right == 0 || math_right == 1){
+                        this->threadSample->setEng(math_right);
+                        this->setting->mode=math_right;
+                    }else{
+                        ShowMsgBox("模式错误。");
+                    }
+                }else if(left == "width" && math_right > 0){
+                    this->resize(math_right, this->height());
+                }else if(left == "hight" && math_right > 0){
+                    this->resize(this->width(), math_right);
+                }else if(left == "file"){
+                    this->readFiletoTable(right);
                 }
-            }else if(left == "anim_time"){
-                if (math_right >= 8 && math_right <= 256){
-                    this->threadSample->setonceTime(math_right);
-                }else{
-                    ShowMsgBox("动画时间只能在8～256.");
+                else{
+                    left = "未知的key: " + left;
+                    ShowMsgBox(left);
                 }
-            }else if(left == "rand_mode"){
-                if (math_right == 0 || math_right == 1){
-                    this->threadSample->setEng(math_right);
-                }else{
-                    ShowMsgBox("模式错误。");
-                }
-            }else{
-                left = "未知的key: " + left;
-                ShowMsgBox(left);
             }
         }
         effFont();
@@ -117,7 +139,7 @@ void RandomChoice::readini(){
         ShowMsgBox("没有配置文件“setting.ini”!");
     }
 }
-
+//消息窗
 void RandomChoice::ShowMsgBox(QString str){
     this->msgBox.setText(str);
     this->msgBox.show();
@@ -146,34 +168,54 @@ void RandomChoice::readFiletoTable(QString fn){
 //追加
 void RandomChoice::on_pushButton_2_released()
 {
-    PersonListItem->appendRow(AddEle());
+    if (res->isHidden()){
+        PersonListItem->appendRow(AddEle());
+    }
+    else{
+        ShowMsgBox("抽样时请不要追加!");
+    }
 }
 //插入
 void RandomChoice::on_pushButton_3_released()
 {
-    int cur = PersonList->currentIndex().row();
-    if (cur >= 0){
-        PersonListItem->insertRow(cur, AddEle("1", "", cur));
-    }else{
-        ShowMsgBox("请选中元素再插入.");
+    if (res->isHidden()){
+        int cur = PersonList->currentIndex().row();
+        if (cur >= 0){
+            PersonListItem->insertRow(cur, AddEle("1", "", cur));
+        }else{
+            ShowMsgBox("请选中元素再插入.");
+        }
+    }
+    else{
+        ShowMsgBox("抽样时请不要插入!");
     }
 }
 //删除
 void RandomChoice::on_pushButton_4_released()
 {
-    int cur = PersonList->currentIndex().row();
-    if (cur >= 0){
-        setWeights(cur, -1);
-        PersonListItem->removeRow(cur);
+    if (res->isHidden()){
+        int cur = PersonList->currentIndex().row();
+        if (cur >= 0){
+            setWeights(cur, -1);
+            PersonListItem->removeRow(cur);
+        }else{
+            ShowMsgBox("没有选中");
+        }
+    }else{
+        ShowMsgBox("抽样时请不要删除!");
     }
 }
 //清空
 void RandomChoice::on_pushButton_5_released()
 {
-    weigths.clear();
-    rCNT = 0;
-    PersonListItem->clear();
-    PersonListItem->setHorizontalHeaderLabels(this->headLabel);
+    if (res->isHidden()){
+        weigths.clear();
+        rCNT = 0;
+        PersonListItem->clear();
+        PersonListItem->setHorizontalHeaderLabels(this->headLabel);
+    }else{
+        ShowMsgBox("抽样时请不要清空!");
+    }
 }
 //打开
 void RandomChoice::on_action_triggered()
@@ -221,10 +263,11 @@ void RandomChoice::on_action_5_triggered()
 }
 
 //生成结果
-void RandomChoice::on_pushButton_released()
+void RandomChoice::startResultShow()
 {
     if (!res->isHidden()){
-        ShowMsgBox("窗口未关闭！");
+        res->clearText();
+        res->hide();
         return;
     }
 
@@ -271,13 +314,13 @@ void RandomChoice::on_helpUse_triggered()
 void RandomChoice::on_pushButton_6_clicked()
 {
     int cntRow = this->PersonListItem->rowCount();
-    std::mt19937 gen;
+    std::mt19937_64 gen;
     if (cntRow > 0){
         if (this->setting->mode){
-            gen = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+            gen = std::mt19937_64(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         }else
         {
-            gen = std::mt19937(std::random_device()());
+            gen = std::mt19937_64(std::random_device()());
         }
         std::uniform_int_distribution<int> dist(0, cntRow - 1);
         QString arr;
@@ -303,10 +346,10 @@ void RandomChoice::on_pushButton_6_clicked()
 void RandomChoice::on_action_2_triggered()
 {
     this->setting->show();
+    this->setting->on_buttonBox_rejected();
     this->setting->exec();
     this->threadSample->setonceTime(this->setting->animationTime);
     this->threadSample->setaniTime(this->setting->animationCnt);
-    this->threadSample->setSeed(this->setting->seed);
     this->threadSample->setEng(this->setting->mode);
 }
 
@@ -342,3 +385,16 @@ void RandomChoice::on_personlist_chg(const QModelIndex &index)
         *itr = weight;
     }
 }
+
+
+void RandomChoice::on_startRandC_clicked()
+{
+    this->startResultShow();
+}
+
+
+void RandomChoice::on_bubblePop_triggered()
+{
+    this->floatwindow->show();
+}
+
