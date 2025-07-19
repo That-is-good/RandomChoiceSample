@@ -1,30 +1,58 @@
 #include "randomchoice.h"
 #include "ui_randomchoice.h"
-#include <random>
-#include <list>
 
-QList<QStandardItem*> AddEle(QString p = "1", QString q = ""){
-    QList<QStandardItem*> addI;
-    addI.append(new QStandardItem(p));
-    addI.append(new QStandardItem(q));
-    return addI;
+QFont getPersistentFont(bool* ok, QWidget* parent)
+{
+    static QFont lastFont;
+
+    QFontDialog dlg(parent);
+    if (lastFont != QFont()) {
+        dlg.setCurrentFont(lastFont);
+    }
+
+    int result = dlg.exec();
+    if (ok) *ok = (result == QDialog::Accepted);
+
+    if (result == QDialog::Accepted) {
+        lastFont = dlg.selectedFont();
+    }
+
+    return dlg.selectedFont();
 }
 
-RandomChoice::RandomChoice(QWidget *parent) : QMainWindow(parent), ui(new Ui::RandomChoice)
+void RandomChoice::AddEle(QString p, QString q, int cur = -1){
+    QList<QStandardItem*> addI(2);
+    addI[0] = (new QStandardItem(p));
+    addI[1] = (new QStandardItem(q));
+    if (cur >= 0)
+    {
+        this->PersonListItem->insertRow(cur, addI);
+    }
+    else {
+        this->PersonListItem->appendRow(addI);
+    }
+    
+}
+
+RandomChoice::RandomChoice(QWidget* parent) : QMainWindow(parent), ui(new Ui::RandomChoice)
 {
     ui->setupUi(this);
-    PersonList = this->findChild<QTableView*>("personlist");
-    if (PersonList != nullptr){
+    PersonList = ui->personlist;
+    if (PersonList != nullptr) {
         PersonListItem->setHorizontalHeaderLabels(this->headLabel);
         PersonList->horizontalHeader()->setStretchLastSection(true);
         PersonList->setModel(PersonListItem);
         PersonList->setAcceptDrops(true);
     }
+    ui->personlist->setItemDelegateForColumn(0, onlyNumber99999);
     this->setAcceptDrops(true);
-    Rdcnts = this->findChild<QSpinBox *>("spinBox");
-    repeated = this->findChild<QCheckBox *>("repeated");
-    animation = this->findChild<QCheckBox *>("animation");
-    engset = this->findChild<QAction *>("action_6");
+    Rdcnts = ui->spinBox;
+    repeated = ui->repeated;
+    animation = ui->animation;
+    connect(ui->action_3, &QAction::triggered, this, [&]() {
+        this->flt->show();
+        });
+    connect(flt, &FloatingWidget::Start, this, [&]() {on_pushButton_released(); });
 }
 
 RandomChoice::~RandomChoice()
@@ -38,36 +66,48 @@ void RandomChoice::ShowMsgBox(QString str){
     this->msgBox.exec();
 }
 //文件读取
-void RandomChoice::readFiletoTable(QString fn){
+void RandomChoice::readFiletoTable(QString fn) {
     QFile rdFile(fn);
-    if (rdFile.open(QIODevice::ReadOnly | QIODevice::Text)){
-        QByteArray rInChar;
-        while (!rdFile.atEnd()){
-            rInChar = rdFile.readLine().removeLast();
-            qsizetype seprated = rInChar.indexOf('\t');
-            if (seprated){
-                QByteArray leftChar = rInChar.left(seprated);
-                if (leftChar.isEmpty()){
-                    leftChar = "1";
-                }
-                PersonListItem->appendRow(AddEle(leftChar ,rInChar.mid(seprated + 1)));
+    if (!rdFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        ShowMsgBox(fn + "无法打开。错误: " + rdFile.errorString());
+        return;
+    }
+
+    QTextStream in(&rdFile);
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+
+        int separatorPos = line.indexOf(',');
+
+        QString leftPart, rightPart;
+
+        if (separatorPos != -1) {  // 存在逗号
+            leftPart = line.left(separatorPos).trimmed();
+            rightPart = line.mid(separatorPos + 1).trimmed();
+
+            if (leftPart.isEmpty()) {
+                leftPart = "1";  // 逗号前为空则默认为1
             }
         }
-    }else{
-        ShowMsgBox(fn + "无法打开。");
+        else {  // 不存在逗号
+            leftPart = "1";      // 默认leftPart为1
+            rightPart = line;    // 整行作为rightPart
+        }
+
+        AddEle(leftPart.toUtf8(), rightPart.toUtf8());
     }
 }
 //追加
 void RandomChoice::on_pushButton_2_released()
 {
-    PersonListItem->appendRow(AddEle());
+    AddEle("1", "");
 }
 //插入
 void RandomChoice::on_pushButton_3_released()
 {
     int cur = PersonList->currentIndex().row();
     if (cur >= 0){
-        PersonListItem->insertRow(cur, AddEle());
+        AddEle("1", "", cur);
     }else{
         ShowMsgBox("请选中元素再插入.");
     }
@@ -118,22 +158,16 @@ void RandomChoice::dragEnterEvent(QDragEnterEvent* event){
 void RandomChoice::on_action_5_triggered()
 {
     bool pressed = false;
-    this->font = QFontDialog::getFont(&pressed);
+    this->font = getPersistentFont(&pressed, this);
     if (pressed){
         this->setFont(this->font);
         this->msgBox.setFont(this->font);
-        this->res->setFont(this->font);
     }
 }
 
 //生成结果
 void RandomChoice::on_pushButton_released()
 {
-    if (!res->isHidden()){
-        ShowMsgBox("窗口未关闭！");
-        return;
-    }
-    std::list<int> weigths;
     int allCounts = PersonListItem->rowCount();
     if (allCounts <= 0){
         ShowMsgBox("元素数量不能为0！");
@@ -142,51 +176,42 @@ void RandomChoice::on_pushButton_released()
         ShowMsgBox("在不重复的情况下抽样数量不能超过元素数量！");
         return;
     }
+    this->need.weight = new int[allCounts];
+    this->need.content = new QString[allCounts];
     int maxCan = 0;
     for (int i = 0; i < allCounts; ++i) {
         QString temp = PersonListItem->item(i, 0)->text();
-        bool pass = false;
-        int weigth = temp.toInt(&pass);
-        if (pass){
-            if (weigth > 65535){
-                ShowMsgBox("格式有误！权重不能超过65535！");
-                PersonList->selectRow(i);
-                return;
-            }
-            weigths.push_back(weigth);
-            if (weigth != 0){
-                ++maxCan;
-            }
-        }else{
-            ShowMsgBox("格式有误！权重只能是自然数！");
-            PersonList->selectRow(i);
-            return;
+        int weigth = temp.toInt();
+
+        this->need.weight[i] = weigth;
+        this->need.content[i] = PersonListItem->item(i, 1)->text();
+        if (weigth > 0){
+            ++maxCan;
         }
     }
     if (!repeated->checkState() && maxCan < Rdcnts->value()){
         ShowMsgBox("权重有误，在不重复的情况下可能的结果数量小于抽取数量");
         return;
     }
-    threadSample->setCnt(Rdcnts->value());
-    threadSample->setAllCnt(allCounts);
-    threadSample->setAnimation(animation->checkState());
-    threadSample->setRepeated(repeated->checkState());
-    threadSample->setItemModel(PersonListItem);
-    threadSample->setRes(res);
-    threadSample->setlist(&weigths);
-    threadSample->start();
-
-    res->show();
-    res->exec();
-    bool isnfinished = !threadSample->isFinished();
-    if (isnfinished)
-        ShowMsgBox("你已提前关闭窗口，但抽样不会结束。");
-    threadSample->wait();
-    if (isnfinished)
-        ShowMsgBox("抽样已结束。");
-    res->hide();
-
-    res->clearText();
+    this->need.all = allCounts;
+    this->need.anime = animation->checkState();
+    this->need.cnt = Rdcnts->value();
+    this->need.repeat = repeated->checkState();
+    this->need.mode = this->setting->seed;
+    this->need.seed = this->setting->seedEnter->value();
+    this->need.time = this->setting->animationTime->value();
+    this->need.count = this->setting->animationCnt->value();
+    this->need.resultS = new ShowResult(this);
+    this->need.resultS->setAttribute(Qt::WA_DeleteOnClose, true);
+    ShowSamples* res = new ShowSamples(this);
+    this->need.resultS->setFont(this->font);
+    this->need.resultS->show();
+    res->initialise(this->need);
+    res->start();
+    delete[] this->need.weight;
+    delete[] this->need.content;
+    this->need.weight = nullptr;
+    this->need.content = nullptr;
 }
 
 
@@ -196,25 +221,41 @@ void RandomChoice::on_helpUse_triggered()
 }
 
 //重排
+static void swapRows(QStandardItemModel* model, int rowA, int rowB) {
+    // 检查模型有效性
+    if (!model) return;
+
+    // 检查行号有效性
+    const int rowCount = model->rowCount();
+    if (rowA < 0 || rowB < 0 || rowA >= rowCount || rowB >= rowCount || rowA == rowB) {
+        return;
+    }
+
+    // 确保先处理较小的行号
+    const int lowerRow = qMin(rowA, rowB);
+    const int upperRow = qMax(rowA, rowB);
+
+    // 取出两行数据
+    QList<QStandardItem*> upperItems = model->takeRow(upperRow);
+    QList<QStandardItem*> lowerItems = model->takeRow(lowerRow);
+
+    // 重新插入交换后的行
+    model->insertRow(lowerRow, upperItems);
+    model->insertRow(upperRow, lowerItems);
+}
+
 void RandomChoice::on_pushButton_6_clicked()
 {
     int cntRow = this->PersonListItem->rowCount();
     if (cntRow > 0){
-        std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-        std::uniform_int_distribution<int> dist(0, cntRow - 1);
-        QStandardItem *arr[4];
+        QRandomGenerator64 rd;
         int chosen = 0;
-        for (int i = 0; i < cntRow; ++i) {
-            chosen = dist(gen);
-            arr[0] = this->PersonListItem->item(i, 0)->clone();
-            arr[1] = this->PersonListItem->item(i, 1)->clone();
-            arr[2] = this->PersonListItem->item(chosen, 0)->clone();
-            arr[3] = this->PersonListItem->item(chosen, 1)->clone();
-
-            this->PersonListItem->setItem(i, 0, arr[2]);
-            this->PersonListItem->setItem(i, 1, arr[3]);
-            this->PersonListItem->setItem(chosen, 0, arr[0]);
-            this->PersonListItem->setItem(chosen, 1, arr[1]);
+        for (int i = 0; i < cntRow - 1; ++i) {
+            chosen = rd.system()->bounded(i + 1, cntRow);
+            if (chosen != i)
+            {
+                swapRows(this->PersonListItem, i, chosen);
+            }
         }
     }
 }
@@ -223,16 +264,5 @@ void RandomChoice::on_pushButton_6_clicked()
 void RandomChoice::on_action_2_triggered()
 {
     this->setting->show();
-    this->setting->exec();
-    this->threadSample->setonceTime(this->setting->animationTime->value());
-    this->threadSample->setaniTime(this->setting->animationCnt->value());
-    short Spwmode = 0;
-    if (this->setting->mttAndrand->isChecked()){
-        Spwmode = 1;
-    }else if (this->setting->mttAndseed->isChecked()){
-        Spwmode = 2;
-        this->threadSample->setSeed(this->setting->seedEnter->value());
-    }
-    this->threadSample->setEng(Spwmode);
 }
 

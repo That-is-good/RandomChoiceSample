@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QStandardItemModel>
 #include <QListView>
+#include <qfont.h>
 
 namespace Ui {
 class ShowResult;
@@ -16,12 +17,9 @@ class ShowResult : public QDialog
 public:
     explicit ShowResult(QWidget *parent = nullptr);
     ~ShowResult();
-    void resetText(int i, QString str);
+    void resetText(QString str);
     void addText(QString str);
-    void clearText();
-
 private:
-    QListView* ResultList;
     QStandardItemModel *ResultListItem = new QStandardItemModel(this);
     Ui::ShowResult *ui;
 

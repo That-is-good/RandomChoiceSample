@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RANDOMCHOICE_H
 #define RANDOMCHOICE_H
 
@@ -14,18 +15,25 @@
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QFile>
-
+#include <qlist.h>
+#include <qrandom.h>
+#include <qregularexpression.h>
+#include "content.h"
+#include "floatwindow.h"
+#include "regExpLimit.h"
 #include "showsamples.h"
-#include "showresult.h"
 #include "settingmenu.h"
 
-#define StrhelpStr "本程序由NewJay好果汁无限公司制作\n1.动画指抽样时的变化动画，具体请到设置->详细调节。\n2.引擎是指抽样时采用的随机数方法，一般推荐linux系统用randomdevice。\n3.文件中写权重可以通过该格式 \"[权重]+[制表符]+[元素]\"不写默认为1,\n\t制表符一般是按Tab键输入。"
+#define StrhelpStr "1.动画指抽样时的变化动画，具体请到设置->详细调节。\n2.文件中写权重可以通过该格式 \"[权重],[元素]\"不写默认为1。"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class RandomChoice;
 }
 QT_END_NAMESPACE
+
+
+QFont getPersistentFont(bool* ok, QWidget* parent = nullptr);
 
 class RandomChoice : public QMainWindow
 {
@@ -36,6 +44,7 @@ public:
     ~RandomChoice();
     void readFiletoTable(QString fn);
     void ShowMsgBox(QString str);
+    void AddEle(QString, QString, int);
 protected:
     virtual void dragEnterEvent(QDragEnterEvent* event) override;
     virtual void dropEvent(QDropEvent *event) override;
@@ -68,15 +77,15 @@ private:
     QFont font;
     QTableView* PersonList;
     QStandardItemModel *PersonListItem = new QStandardItemModel(this);
+    Hitsuyo need;
     QMessageBox msgBox = QMessageBox(this);
     QSpinBox *Rdcnts;
     QCheckBox *repeated;
     QCheckBox *animation;
-    ShowResult *res = new ShowResult();
     SettingMenu *setting = new SettingMenu();
-    QAction *engset;
     const QStringList headLabel = QStringList() << "权重" << "元素";
-    ShowSamples* threadSample = new ShowSamples(this);
+    FloatingWidget* flt = new FloatingWidget(this);
+    RegexValidatorDelegate* onlyNumber99999 = new RegexValidatorDelegate("^(\\d{1,5})$");
 };
 
 #endif // RANDOMCHOICE_H

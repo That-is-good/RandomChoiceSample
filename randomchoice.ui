@@ -188,7 +188,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>24</height>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -206,6 +206,7 @@
     <property name="title">
      <string>设置</string>
     </property>
+    <addaction name="action_3"/>
     <addaction name="action_2"/>
     <addaction name="action_5"/>
     <addaction name="separator"/>
@@ -259,7 +260,7 @@
     <string>Ctrl+Shift+H</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
   <action name="action_2">
@@ -271,6 +272,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="action_3">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::CallStart"/>
+   </property>
+   <property name="text">
+    <string>悬浮窗</string>
    </property>
   </action>
  </widget>

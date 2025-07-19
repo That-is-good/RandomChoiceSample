@@ -4,8 +4,7 @@
 ShowResult::ShowResult(QWidget *parent) : QDialog(parent), ui(new Ui::ShowResult)
 {
     ui->setupUi(this);
-    ResultList = this->findChild<QListView*>("ResultList");
-    ResultList->setModel(ResultListItem);
+    ui->ResultList->setModel(ResultListItem);
 }
 
 ShowResult::~ShowResult()
@@ -13,14 +12,10 @@ ShowResult::~ShowResult()
     delete ui;
 }
 
-void ShowResult::resetText(int i, QString str){
-    ResultListItem->item(i)->setText(str);
+void ShowResult::resetText(QString str){
+    ResultListItem->item(ResultListItem->rowCount() - 1)->setText(str);
 }
 
 void ShowResult::addText(QString str){
     ResultListItem->appendRow(new QStandardItem(str));
-}
-
-void ShowResult::clearText(){
-    ResultListItem->clear();
 }

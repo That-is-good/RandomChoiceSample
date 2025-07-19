@@ -5,11 +5,11 @@ SettingMenu::SettingMenu(QWidget *parent) : QDialog(parent) , ui(new Ui::Setting
 {
     ui->setupUi(this);
 
-    animationTime = this->findChild<QSlider *>("animationTime");
-    animationCnt = this->findChild<QSlider *>("animationCnt");
-    mttAndrand = this->findChild<QRadioButton *>("randDevMt");
-    mttAndseed = this->findChild<QRadioButton *>("MtSeed");
-    seedEnter = this->findChild<QSpinBox *>("EnterSeed");
+    animationTime = ui->animationTime;
+    animationCnt = ui->animationCnt;
+    rand = ui->rand;
+    seed = ui->seed;
+    seedEnter = ui->EnterSeed;
 }
 
 SettingMenu::~SettingMenu()
